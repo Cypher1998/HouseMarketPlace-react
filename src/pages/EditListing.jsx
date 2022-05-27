@@ -6,15 +6,16 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from 'firebase/storage';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase.config';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Spinner from '../components/Spinner';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'react-toastify';
 
-const CreateListing = () => {
+const EditListing = () => {
   const [loading, setLoading] = useState(false);
+  const [listing, setListing] = useState(null);
   // eslint-disable-next-line
   const [geoLocationEnabled, setGeoLocationEnabled] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,6 +53,32 @@ const CreateListing = () => {
   const auth = getAuth();
   const navigate = useNavigate();
   const isMounted = useRef(true);
+  const params = useParams();
+
+  useEffect(() => {
+    setLoading(true);
+    const fetchListing = async () => {
+      const docRef = doc(db, 'listings', params.listingID);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setFormData({ ...docSnap.data(), address: docSnap.data().location });
+        setListing(docSnap.data());
+        setLoading(false);
+      } else {
+        navigate('/');
+        toast.error('Listing does not exist');
+      }
+    };
+    fetchListing();
+  }, [navigate, params.listingID]);
+
+  useEffect(() => {
+    if (listing && listing.userRef !== auth.currentUser.uid) {
+      toast.error('You cannot edit this listing');
+      navigate('/');
+    }
+  });
 
   useEffect(() => {
     if (isMounted) {
@@ -180,7 +207,9 @@ const CreateListing = () => {
     delete formDataCopy.address;
     !formDataCopy.offer && delete formDataCopy.discountedPrice;
 
-    const docRef = await addDoc(collection(db, 'listings'), formDataCopy);
+    // update listing
+    const docRef = doc(db, 'listing', params.listingID);
+    await updateDoc(docRef, formDataCopy);
 
     setLoading(false);
 
@@ -222,13 +251,13 @@ const CreateListing = () => {
   return (
     <div className="profile">
       <header>
-        <p className="pageHeader">Create a listing</p>
+        <p className="pageHeader">Edit listing</p>
       </header>
       <main>
         <form onSubmit={onSubmit}>
           <label className="formLabel">Sell / Rent</label>
           <div className="formButtons">
-            <button
+            <buttonNo
               type="button"
               className={type === 'sale' ? 'formButtonActive' : 'formButton'}
               id="type"
@@ -236,7 +265,7 @@ const CreateListing = () => {
               onClick={onMutate}
             >
               Sell
-            </button>
+            </buttonNo>
             <button
               type="button"
               className={type === 'rent' ? 'formButtonActive' : 'formButton'}
@@ -436,11 +465,11 @@ const CreateListing = () => {
             required
           />
           <button type="submit" className="primaryButton createListingButton">
-            Create Listing
+            Edit Listing
           </button>
         </form>
       </main>
     </div>
   );
 };
-export default CreateListing;
+export default EditListing;

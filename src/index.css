@@ -585,7 +585,7 @@ button {
 }
 
 .contactLandlord {
-  margin-top: 2rem;
+  margin-top: 0.5rem;
   display: flex;
   align-items: center;
 }
@@ -596,18 +596,22 @@ button {
 }
 
 .messageForm {
-  margin-top: 0.5rem;
+  margin-top: 0.2rem;
 }
 
 .messageDiv {
-  margin-top: 2rem;
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
-  margin-bottom: 4rem;
+  margin-bottom: 3rem;
 }
 
 .messageLabel {
-  margin-bottom: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.mailButton {
+  margin-bottom: 10rem;
 }
 
 .profile {
